@@ -7,3 +7,6 @@ PyYAML
 scipy
 transforms3d
 typeguard
+"empy<4"
+catkin_pkg
+lark

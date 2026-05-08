@@ -6,7 +6,7 @@
 
 ### 建议发送
 
-- `crazyflie-firmware/`
+- `crazyflie_sim/`
 - `crazyswarm2_ws/src/crazyswarm2/`
 - `crazyswarm2_ws/src/formation_reconfiguration/`
 - `crazyswarm2_ws/src/formation_ui/`，如果对方也需要 Web 控制页
@@ -27,7 +27,7 @@
 
 ## 2. 对方是否需要重新构建
 
-### `crazyflie-firmware`
+### `crazyflie_sim`
 
 需要。
 
@@ -35,7 +35,7 @@
 标准流程是：
 
 ```bash
-cd crazyflie-firmware
+cd crazyflie_sim
 mkdir -p sitl_make/build
 cd sitl_make/build
 cmake ..
@@ -101,7 +101,7 @@ source install/setup.bash
 ### 仿真
 
 ```bash
-cd crazyflie-firmware
+cd crazyflie_sim
 source /path/to/venv/bin/activate
 bash tools/crazyflie-simulation/simulator_files/gazebo/launch/sitl_multiagent_square.sh -n 1 -m crazyflie
 ```

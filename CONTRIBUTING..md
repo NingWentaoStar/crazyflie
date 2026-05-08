@@ -11,32 +11,31 @@
 3. Owner 选择你自己的 GitHub 账号
 4. 点击 **Create fork**
 
-完成后你会在 `https://github.com/<你的用户名>/<仓库名>` 看到自己的 fork。
+完成后你会在 `https://github.com/<你的用户名>/crazyflie` 看到自己的 fork。
 
 ### 1.2 克隆到本地
 
 ```bash
-cd ~/work
-git clone git@github.com:<你的用户名>/<仓库名>.git
-cd <仓库名>
+git clone git@github.com:<你的用户名>/crazyflie.git
+cd crazyflie
 ```
 
-> 如果还没配置 SSH Key，先用 `git clone https://github.com/<你的用户名>/<仓库名>.git`
+> 如果还没配置 SSH Key，先用 `git clone https://github.com/<你的用户名>/crazyflie.git`
 
 ### 1.3 添加 upstream 远程
 
 ```bash
-git remote add upstream git@github.com:<实验室组织>/<仓库名>.git
+git remote add upstream git@github.com:PIControlLab/crazyflie.git
 git remote -v
 ```
 
 输出应显示两个远程：
 
 ```
-origin    git@github.com:<你的用户名>/<仓库名>.git (fetch)
-origin    git@github.com:<你的用户名>/<仓库名>.git (push)
-upstream  git@github.com:<实验室组织>/<仓库名>.git (fetch)
-upstream  git@github.com:<实验室组织>/<仓库名>.git (push)
+origin    git@github.com:<你的用户名>/crazyflie.git (fetch)
+origin    git@github.com:<你的用户名>/crazyflie.git (push)
+upstream  git@github.com:PIControlLab/crazyflie.git (fetch)
+upstream  git@github.com:PIControlLab/crazyflie.git (push)
 ```
 
 - `origin` 指向你自己的 fork，你有推送权限

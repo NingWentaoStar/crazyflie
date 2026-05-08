@@ -6,7 +6,7 @@
 
 本次工作目标是把原本面向 Ubuntu 22.04 + Gazebo Garden 的仿真链路，迁移到 Ubuntu 24.04 环境下，并保持以下流程可用：
 
-- `crazyflie-firmware` 在环仿真可启动
+- `crazyflie_sim` 在环仿真可启动
 - `crazyswarm2` 通过 `cflib` 后端可连接仿真机
 - `formation_reconfiguration` 可执行起飞、编队切换、降落
 - 历史数据可保存并生成图像
@@ -18,7 +18,7 @@
 ### 2.1 固件 SITL 线程改成有限等待
 
 文件：
-- [`crazyflie-firmware/src/hal/src/socketlink.c`](./crazyflie-firmware/src/hal/src/socketlink.c)
+- [`crazyflie_sim/src/hal/src/socketlink.c`](./crazyflie_sim/src/hal/src/socketlink.c)
 
 改动：
 - 将 `socketlinkTask()` 里的 `poll()` 改为有限超时等待，而不是无限阻塞。
@@ -31,7 +31,7 @@
 ### 2.2 SITL 启动时直接放过陀螺仪 bias 校准门槛
 
 文件：
-- [`crazyflie-firmware/src/hal/src/sensors_sitl.c`](./crazyflie-firmware/src/hal/src/sensors_sitl.c)
+- [`crazyflie_sim/src/hal/src/sensors_sitl.c`](./crazyflie_sim/src/hal/src/sensors_sitl.c)
 
 改动：
 - 在 `sensorsSimInit()` 中将 `gyroBiasFound` 直接置为 `true`，并把 `gyroBias` 置零。
@@ -43,7 +43,7 @@
 ### 2.3 CrazySim 插件支持 `cflib` 扫描包更早返回
 
 文件：
-- [`crazyflie-firmware/tools/crazyflie-simulation/simulator_files/gazebo/plugins/CrazySim/crazysim_plugin.cpp`](./crazyflie-firmware/tools/crazyflie-simulation/simulator_files/gazebo/plugins/CrazySim/crazysim_plugin.cpp)
+- [`crazyflie_sim/tools/crazyflie-simulation/simulator_files/gazebo/plugins/CrazySim/crazysim_plugin.cpp`](./crazyflie_sim/tools/crazyflie-simulation/simulator_files/gazebo/plugins/CrazySim/crazysim_plugin.cpp)
 
 改动：
 - 对 `0xFF` 的空 CRTP 扫描包直接回包。
@@ -82,7 +82,7 @@
 
 如果你准备把 `src` 之类的东西发给别人，最小建议是发这几部分：
 
-- `crazyflie-firmware/`
+- `crazyflie_sim/`
 - `crazyswarm2_ws/src/formation_reconfiguration/`
 - `crazyswarm2_ws/src/crazyswarm2/`
 - `crazyflie-lib-python/`
@@ -142,7 +142,7 @@ mkdir -p ~/work/crazysim
 
 把你发过去的源码分别放入：
 
-- `~/work/crazysim/crazyflie-firmware`
+- `~/work/crazysim/crazyflie_sim`
 - `~/work/crazyswarm2_ws/src/crazyswarm2`
 - `~/work/crazyswarm2_ws/src/formation_reconfiguration`
 - 需要的话再放 `crazyflie-lib-python`
@@ -187,7 +187,7 @@ source install/setup.bash
 
 ### 6.1 先启动仿真固件
 
-在 `crazyflie-firmware` 目录下：
+在 `crazyflie_sim` 目录下：
 
 ```bash
 source ~/work/crazysim/.venv/bin/activate

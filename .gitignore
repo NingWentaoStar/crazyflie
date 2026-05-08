@@ -11,9 +11,9 @@ venv/
 env/
 
 # ROS2 / colcon build artifacts
-build/
-install/
-log/
+/build/
+/install/
+/log/
 
 # Cache
 cache/
