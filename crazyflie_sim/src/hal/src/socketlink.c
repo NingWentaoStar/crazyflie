@@ -45,9 +45,11 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <poll.h>
 
 #include <errno.h>
+#include <unistd.h>
 
 // Global variables for socket management
 static struct sockaddr_in myaddr;
@@ -58,6 +60,7 @@ static struct pollfd fds[1];
 
 
 static bool isInit = false;
+static bool preInitDone = false;
 static xQueueHandle crtpPacketDelivery;
 
 static int socketlinkSendPacket(CRTPPacket *p);
@@ -155,19 +158,17 @@ static int socketlinkSetEnable(bool enable)
 /*
  * Public functions
  */
-void socketlinkInit()
+void socketlinkPreInit(void)
 {
-  if(isInit)
+  if (preInitDone)
     return;
 
   // Create UDP socket
   if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
-    isInit = false;
-    DEBUG_PRINT("cannot create socket\n");
-    ASSERT_FAILED();
+    DEBUG_PRINT("cannot create socket (preInit)\n");
     return;
   }
-  DEBUG_PRINT("Create socket succeed \n");
+  DEBUG_PRINT("Create socket succeed (preInit) \n"); fflush(stdout);
 
   // Let the OS pick this instance port and address
   memset((char *)&myaddr, 0, sizeof(myaddr));
@@ -176,12 +177,45 @@ void socketlinkInit()
   myaddr.sin_port = htons(0);
 
   if (bind(fd, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0){
-    isInit =false;
-    DEBUG_PRINT("Binding failed \n");
-    ASSERT_FAILED();
+    DEBUG_PRINT("Binding failed (preInit) : %s \n", strerror(errno));
+    close(fd);
+    fd = -1;
     return;
   }
-  DEBUG_PRINT("Binding succeed \n");
+  DEBUG_PRINT("Binding succeed (preInit) \n"); fflush(stdout);
+  preInitDone = true;
+}
+
+void socketlinkInit()
+{
+  if(isInit)
+    return;
+
+  if (!preInitDone) {
+    // Fallback: create socket if not pre-initialized
+    if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+      isInit = false;
+      DEBUG_PRINT("cannot create socket\n");
+      ASSERT_FAILED();
+      return;
+    }
+    DEBUG_PRINT("Create socket succeed \n"); fflush(stdout);
+
+    memset((char *)&myaddr, 0, sizeof(myaddr));
+    myaddr.sin_family = AF_INET;
+    myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    myaddr.sin_port = htons(0);
+
+    while (bind(fd, (struct sockaddr *)&myaddr, sizeof(myaddr)) < 0){
+      if (errno != EINTR) {
+        isInit =false;
+        DEBUG_PRINT("Binding failed : %s \n", strerror(errno));
+        ASSERT_FAILED();
+        return;
+      }
+    }
+    DEBUG_PRINT("Binding succeed \n"); fflush(stdout);
+  }
 
   // Initialize destination address (gazebo handler server)
   memset((char *)&remaddr, 0, sizeof(remaddr));\
@@ -203,28 +237,34 @@ void socketlinkInit()
   fds[0].events = POLLIN;
 
   // Wait for validation by the SITL instance
-  DEBUG_PRINT("Waiting for connection with gazebo ... \n");
+  DEBUG_PRINT("Waiting for connection with gazebo ... \n"); fflush(stdout);
   bool commInitialized = false;
   int recvlen;
-  uint8_t count;
   const uint8_t max_count = 10;
+
+  // Set a 200ms receive timeout so we can re-send handshake if no response
+  struct timeval tv;
+  tv.tv_sec = 0;
+  tv.tv_usec = 200000;
+  setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
   p.header = 0xF3;  // send null header for identification process
   p.size = 0;       // No data when doing identification process
   while(!commInitialized)
   {
-    count = 0;
     socketlinkSendPacket(&p);
-    while(count < max_count){
-      recvlen = recvfrom(fd, socket_buff, sizeof(socket_buff), 0, (struct sockaddr *)&remaddr, &addrlen);
-      if (recvlen == 1 && socket_buff[0] == 0xF3){
-          commInitialized = true;
-          break;
-      }
-      count++;
-      vTaskDelay(M2T(10));
+    recvlen = recvfrom(fd, socket_buff, sizeof(socket_buff), 0, (struct sockaddr *)&remaddr, &addrlen);
+    if (recvlen == 1 && socket_buff[0] == 0xF3){
+        commInitialized = true;
+        break;
     }
+    vTaskDelay(M2T(10));
   }
+
+  // Restore blocking mode
+  tv.tv_sec = 0;
+  tv.tv_usec = 0;
+  setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
   DEBUG_PRINT("Connection established with gazebo \n");
 

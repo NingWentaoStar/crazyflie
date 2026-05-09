@@ -4,6 +4,8 @@
 
 #include "crazysim_plugin.h"
 #include <future>
+#include <thread>
+#include <chrono>
 
 #include <gz/plugin/Register.hh>
 GZ_ADD_PLUGIN(crazyflie_interface::GzCrazyflieInterface,
@@ -271,8 +273,10 @@ void GzCrazyflieInterface::sendCfFirmwareThread() {
 	crtpPacket_t msgs[10];
 	std::pair<std::chrono::steady_clock::duration, crtpPacket_t> stamp_msg_pair;
 	while(isPluginOn){
-		if(!socketInit)
+		if(!socketInit){
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
+		}
 
 		size_t imu_msg_count = imu_queue.try_dequeue_bulk(msgs, 10);
 		for (size_t i = 0; i != imu_msg_count; i++) {
@@ -299,8 +303,10 @@ void GzCrazyflieInterface::sendCfFirmwareThread() {
 void GzCrazyflieInterface::sendCfLibThread() {
 	crtpPacket_t msgs[10];
 	while(isPluginOn){
-		if(!socketInit || !cfLibAddrInitialized_)
+		if(!socketInit || !cfLibAddrInitialized_){
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
+		}
 
 		size_t cflib_msg_count = firmware_to_cflib_queue.wait_dequeue_bulk(msgs, 10);
 		for (size_t i = 0; i != cflib_msg_count; i++) {

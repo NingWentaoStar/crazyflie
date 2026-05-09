@@ -516,7 +516,7 @@ int iRet;
 	sigresume.sa_handler = SIG_IGN;
 	sigfillset( &sigresume.sa_mask );
 
-	sigtick.sa_flags = 0;
+	sigtick.sa_flags = SA_RESTART;
 	sigtick.sa_handler = vPortSystemTickHandler;
 	sigfillset( &sigtick.sa_mask );
 

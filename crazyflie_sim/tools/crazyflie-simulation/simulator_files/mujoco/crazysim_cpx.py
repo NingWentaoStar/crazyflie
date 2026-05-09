@@ -126,9 +126,9 @@ class CrazySimCPX:
         srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if hasattr(socket, 'SO_REUSEPORT'):
             srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        srv.bind(('0.0.0.0', self._cpx_port))
+        srv.bind(('127.0.0.1', self._cpx_port))
         srv.listen(1)
-        print(f'[cpx] CPX TCP server listening on tcp://0.0.0.0:{self._cpx_port}')
+        print(f'[cpx] CPX TCP server listening on tcp://127.0.0.1:{self._cpx_port}')
         print(f'[cpx] CRTP bridge → udp://{self._cflib_host}:{self._cflib_port}')
         print(f'[cpx] Camera frames ← tcp://{self._host}:{self._frame_port}')
 
