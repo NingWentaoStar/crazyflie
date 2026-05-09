@@ -21,6 +21,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip install "empy<4" -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 ### 2.2 编译 SITL 固件
@@ -36,41 +37,13 @@ make -j"$(nproc)" all
 
 ### 2.3 ROS 工作区构建
 
-
 ```bash
 cd ~/crazyflie/crazyswarm2_ws
 source ~/crazyflie/.venv/bin/activate
-mkdir -p crazyswarm2_ws/src/crazyswarm2/crazyflie/deps/crazyflie_tools/crazyflie_cpp/crazyflie-link-cpp/tools/build
-cat > crazyswarm2_ws/src/crazyswarm2/crazyflie/deps/crazyflie_tools/crazyflie_cpp/crazyflie-link-cpp/tools/build/Findlibusb.cmake << 'CMAKE'
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(PC_LIBUSB REQUIRED libusb-1.0)
-find_path(libusb_INCLUDE_DIR NAMES libusb.h PATHS ${PC_LIBUSB_INCLUDE_DIRS})
-find_library(libusb_LIBRARY NAMES usb-1.0 PATHS ${PC_LIBUSB_LIBRARY_DIRS})
-set(LIBUSB_INCLUDE_DIR ${libusb_INCLUDE_DIR})
-set(LIBUSB_LIBRARY ${libusb_LIBRARY})
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(libusb REQUIRED_VARS libusb_INCLUDE_DIR libusb_LIBRARY)
-if(NOT TARGET libusb)
-  add_library(libusb UNKNOWN IMPORTED)
-  set_target_properties(libusb PROPERTIES
-    IMPORTED_LOCATION "${libusb_LIBRARY}"
-    INTERFACE_INCLUDE_DIRECTORIES "${libusb_INCLUDE_DIR}"
-  )
-endif()
-CMAKE
-```
-
-然后编译工作区：
-
-```bash
-cd ~/crazyflie/crazyswarm2_ws
 colcon build --symlink-install
-source install/setup.bash
 ```
 
 ## 3. 标准运行顺序
-
-**启动顺序很重要，必须严格按以下步骤执行：**
 
 ### 3.1 启动仿真固件（SITL）
 
