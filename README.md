@@ -51,7 +51,8 @@ colcon build --symlink-install
 
 ```bash
 source ~/crazyflie/crazyflie_sim/.venv/bin/activate
-bash tools/crazyflie-simulation/simulator_files/gazebo/launch/sitl_multiagent_square.sh -n 4 -m crazyflie
+cd ~/crazyflie/crazyflie_sim
+bash tools/crazyflie-simulation/simulator_files/gazebo/launch/sitl_multiagent_square.sh -n 1 -m crazyflie
 ```
 
 ### 3.2 启动 Crazyswarm2 后端
@@ -59,7 +60,8 @@ bash tools/crazyflie-simulation/simulator_files/gazebo/launch/sitl_multiagent_sq
 在 `crazyswarm2_ws` 目录下：
 
 ```bash
-source /opt/ros/jazzy/setup.bash
+source ~/crazyflie/crazyflie_sim/.venv/bin/activate
+cd ~/crazyflie/crazyswarm2_ws
 source install/setup.bash
 ros2 launch crazyflie launch.py backend:=cflib gui:=false mocap:=false teleop:=false rviz:=false
 ```

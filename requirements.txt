@@ -10,3 +10,4 @@ typeguard
 catkin_pkg
 lark
 pytest
+cflib
