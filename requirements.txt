@@ -7,3 +7,7 @@ PyYAML
 scipy
 transforms3d
 typeguard
+catkin_pkg
+lark
+pytest
+cflib
