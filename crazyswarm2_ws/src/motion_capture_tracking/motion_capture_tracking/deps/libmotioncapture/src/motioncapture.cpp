@@ -170,7 +170,7 @@ namespace libmotioncapture {
     {
       mocap = new libmotioncapture::MotionCaptureOptitrack(
         getString(cfg, "hostname", "localhost"),
-        getString(cfg, "interface_ip", "0.0.0.0"),
+        getString(cfg, "interface_ip", "127.0.0.1"),
         getInt(cfg, "port_command", 1510));
     }
 #endif
@@ -219,7 +219,7 @@ namespace libmotioncapture {
     else if (type == "fzmotion")
     {
       mocap = libmotioncapture::MotionCaptureFZMotion::getInstance(
-        getString(cfg, "local_IP", "0.0.0.0"),
+        getString(cfg, "local_IP", "127.0.0.1"),
         getInt(cfg, "local_port", 9762),
         getString(cfg, "hostname", "fzmotion"),
         getInt(cfg, "remote_port", 9761));

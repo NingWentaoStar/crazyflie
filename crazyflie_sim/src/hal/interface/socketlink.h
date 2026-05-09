@@ -41,6 +41,8 @@ extern char* address_host;
 
 /* Initialize the socket link */
 void socketlinkInit();
+/* Pre-initialize socket creation and bind before FreeRTOS starts */
+void socketlinkPreInit(void);
 
 /* Return true if the init was successful */
 bool socketlinkTest();

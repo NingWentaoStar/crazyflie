@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
     // Listen on multicast address
     boost::asio::io_service io_service;
     receiver r(io_service,
-        boost::asio::ip::address::from_string("0.0.0.0"),
+        boost::asio::ip::address::from_string("127.0.0.1"),
         boost::asio::ip::address::from_string(MULTICAST_ADDRESS));
     io_service.run();
   }

@@ -37,6 +37,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 /* Project includes */
 #include "socketlink.h"
@@ -47,7 +53,7 @@
 
 
 #define CRTP_PORT 19950
-char CRTP_SERVER_ADDRESS[] = "INADDR_ANY";
+char CRTP_SERVER_ADDRESS[] = "127.0.0.1";
 
 /* Store the UDP port to communicate with CF */
 uint16_t crtp_port;
@@ -73,6 +79,10 @@ int main(int argc, char **argv)
     address_host = CRTP_SERVER_ADDRESS;
     printf("No port and ADDRESS selected ! 19950-INADDR_ANY selected as default\n");
   }
+
+  // Pre-initialize the socket before FreeRTOS starts to avoid
+  // seccomp user notification hang in WSL2 kernel
+  socketlinkPreInit();
 
   //Initialize the platform.
   int err = platformInit();
