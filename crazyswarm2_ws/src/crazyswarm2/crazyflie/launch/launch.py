@@ -79,6 +79,17 @@ def parse_yaml(context):
         ),
         Node(
             package='crazyflie',
+            executable='cf_control_bridge.py',
+            condition=LaunchConfigurationEquals('backend','cflib'),
+            name='cf_control_bridge',
+            output='screen',
+            parameters=[{
+                'cf_prefixes': PythonExpression(["['cf_1']"]),
+                'cmd_timeout': 1.0,
+            }],
+        ),
+        Node(
+            package='crazyflie',
             executable='crazyflie_server',
             condition=LaunchConfigurationEquals('backend','cpp'),
             name='crazyflie_server',

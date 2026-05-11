@@ -122,6 +122,7 @@ install(PROGRAMS
   scripts/crazyflie_server.py
   scripts/chooser.py
   scripts/vel_mux.py
+  scripts/cf_control_bridge.py
   scripts/cfmult.py
   scripts/simple_mapper_multiranger.py
   scripts/aideck_streamer.py
