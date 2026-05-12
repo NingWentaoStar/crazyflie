@@ -71,6 +71,7 @@ enum packet_type {
   hoverType         = 5,
   fullStateType     = 6,
   positionType      = 7,
+  velocityWorldType2 = 8,
 };
 
 /* ---===== 2 - Decoding functions =====--- */
@@ -112,6 +113,26 @@ static void velocityDecoder(setpoint_t *setpoint, uint8_t type, const void *data
   setpoint->mode.yaw = modeVelocity;
 
   setpoint->attitudeRate.yaw = -values->yawrate;
+}
+
+/* velocityDecoder2 (protocol >= 9, yawrate is not negated) */
+static void velocityDecoder2(setpoint_t *setpoint, uint8_t type, const void *data, size_t datalen)
+{
+  const struct velocityPacket_s *values = data;
+
+  ASSERT(datalen == sizeof(struct velocityPacket_s));
+
+  setpoint->mode.x = modeVelocity;
+  setpoint->mode.y = modeVelocity;
+  setpoint->mode.z = modeVelocity;
+
+  setpoint->velocity.x = values->vx;
+  setpoint->velocity.y = values->vy;
+  setpoint->velocity.z = values->vz;
+
+  setpoint->mode.yaw = modeVelocity;
+
+  setpoint->attitudeRate.yaw = values->yawrate;
 }
 
 /* zDistanceDecoder
@@ -408,6 +429,7 @@ const static packetDecoder_t packetDecoders[] = {
   [hoverType]         = hoverDecoder,
   [fullStateType]     = fullStateDecoder,
   [positionType]      = positionDecoder,
+  [velocityWorldType2] = velocityDecoder2,
 };
 
 /* Decoder switch */
