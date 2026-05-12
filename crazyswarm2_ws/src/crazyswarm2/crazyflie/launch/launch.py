@@ -84,7 +84,7 @@ def parse_yaml(context):
             name='cf_control_bridge',
             output='screen',
             parameters=[{
-                'cf_prefixes': PythonExpression(["['cf_1']"]),
+                'cf_prefix': 'cf_1',
                 'cmd_timeout': 1.0,
             }],
         ),

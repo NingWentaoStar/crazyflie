@@ -88,6 +88,8 @@ ros2 launch crazyflie launch.py backend:=cflib gui:=false mocap:=false teleop:=f
 pkill -f crazyflie_server
 pkill -x cf2
 pkill -9 -f "gz sim"
+ros2 daemon stop
+pkill -f ros2
 ```
 
 ## 其他说明
