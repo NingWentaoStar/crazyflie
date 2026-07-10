@@ -94,4 +94,12 @@ pkill -f ros2
 
 ## 其他说明
 
-### TOC
+### CrazyStdio进行转发
+sudo apt install linux-tools-virtual hwdata
+sudo update-alternatives --install /usr/local/bin/usbip usbip /usr/lib/linux-tools/*/usbip 20
+sudo usbip list -r 10.1.1.14
+sudo usbip attach -r 10.1.1.14 -b 1-9
+sudo modprobe vhci_hcd
+
+### 从Nat模式配置为Bridged模式
+networkingMode=bridged

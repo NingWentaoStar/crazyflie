@@ -83,7 +83,7 @@ namespace vrpn_client_ros
       clean_name.erase( std::remove_if( clean_name.begin() + start_subsequent, clean_name.end(), isInvalidSubsequentCharInName ), clean_name.end() );
     }
 
-    init(clean_name, nh, false, nullptr);
+    init(clean_name, nh, false);
   }
 
   VrpnTrackerRos::VrpnTrackerRos(std::string tracker_name, std::string host, rclcpp::Node::SharedPtr nh)
@@ -91,10 +91,10 @@ namespace vrpn_client_ros
     std::string tracker_address;
     tracker_address = tracker_name + "@" + host;
     tracker_remote_ = std::make_shared<vrpn_Tracker_Remote>(tracker_address.c_str());
-    init(tracker_name, nh, true, nullptr);
+    init(tracker_name, nh, true);
   }
 
-  void VrpnTrackerRos::init(std::string tracker_name, rclcpp::Node::SharedPtr nh, bool create_mainloop_timer, VrpnClientRos *client)
+  void VrpnTrackerRos::init(std::string tracker_name, rclcpp::Node::SharedPtr nh, bool create_mainloop_timer)
   {
     RCLCPP_INFO_STREAM(nh->get_logger(), "Creating new tracker " << tracker_name);
 
@@ -110,7 +110,6 @@ namespace vrpn_client_ros
     );  // will throw an error if invalid
 
     this->tracker_name = tracker_name;
-    client_ = client;
 
     output_nh_ = nh->create_sub_node(tracker_name);
 
@@ -143,15 +142,15 @@ namespace vrpn_client_ros
     tracker_remote_->mainloop();
   }
 
-  void VrpnTrackerRos::setClient(VrpnClientRos *client)
-  {
-    client_ = client;
-  }
-
   void VRPN_CALLBACK VrpnTrackerRos::handle_pose(void *userData, const vrpn_TRACKERCB tracker_pose)
   {
     VrpnTrackerRos *tracker = static_cast<VrpnTrackerRos *>(userData);
     rclcpp::Node::SharedPtr nh = tracker->output_nh_;
+    
+    if (!tracker->pose_pub_)
+    {
+      tracker->pose_pub_ = nh->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 1);
+    }
 
     if (tracker->use_server_time_)
     {
@@ -172,13 +171,7 @@ namespace vrpn_client_ros
     tracker->pose_msg_.pose.orientation.z = tracker_pose.quat[2];
     tracker->pose_msg_.pose.orientation.w = tracker_pose.quat[3];
 
-    if (tracker->client_ != nullptr)
-    {
-      tracker->client_->handlePoseUpdate(
-        tracker->tracker_name,
-        tracker->pose_msg_.pose,
-        tracker->pose_msg_.header.stamp);
-    }
+    tracker->pose_pub_->publish(tracker->pose_msg_);
   
     // if (tracker->broadcast_tf_)
     // {
@@ -221,6 +214,11 @@ namespace vrpn_client_ros
     VrpnTrackerRos *tracker = static_cast<VrpnTrackerRos *>(userData);
     rclcpp::Node::SharedPtr nh = tracker->output_nh_;
 
+    if (!tracker->twist_pub_)
+    {
+      tracker->twist_pub_ = nh->create_publisher<geometry_msgs::msg::TwistStamped>("twist", 1);
+    }
+
     if (tracker->use_server_time_)
     {
       tracker->twist_msg_.header.stamp.sec = tracker_twist.msg_time.tv_sec;
@@ -245,19 +243,18 @@ namespace vrpn_client_ros
     tracker->twist_msg_.twist.angular.y = pitch;
     tracker->twist_msg_.twist.angular.z = yaw;
 
-    if (tracker->client_ != nullptr)
-    {
-      tracker->client_->handleTwistUpdate(
-        tracker->tracker_name,
-        tracker->twist_msg_.twist,
-        tracker->twist_msg_.header.stamp);
-    }
+    tracker->twist_pub_->publish(tracker->twist_msg_);
   }
 
   void VRPN_CALLBACK VrpnTrackerRos::handle_accel(void *userData, const vrpn_TRACKERACCCB tracker_accel)
   {
     VrpnTrackerRos *tracker = static_cast<VrpnTrackerRos *>(userData);
     rclcpp::Node::SharedPtr nh = tracker->output_nh_;
+
+    if (!tracker->accel_pub_)
+    {
+      tracker->accel_pub_ = nh->create_publisher<geometry_msgs::msg::AccelStamped>("accel", 1);
+    }
 
     if (tracker->use_server_time_)
     {
@@ -283,13 +280,7 @@ namespace vrpn_client_ros
     tracker->accel_msg_.accel.angular.y = pitch;
     tracker->accel_msg_.accel.angular.z = yaw;
 
-    if (tracker->client_ != nullptr)
-    {
-      tracker->client_->handleAccelUpdate(
-        tracker->tracker_name,
-        tracker->accel_msg_.accel,
-        tracker->accel_msg_.header.stamp);
-    }
+    tracker->accel_pub_->publish(tracker->accel_msg_);
   }
 
   VrpnClientRos::VrpnClientRos(rclcpp::Node::SharedPtr nh, rclcpp::Node::SharedPtr private_nh)
@@ -301,7 +292,6 @@ namespace vrpn_client_ros
     nh->declare_parameter("update_frequency", 100.0);
     nh->declare_parameter("frame_id", "world");
     nh->declare_parameter("use_server_time", false);
-    nh->declare_parameter("poses_qos_deadline", 100.0);
     //nh->declare_parameter("broadcast_tf", true);
     nh->declare_parameter("refresh_tracker_frequency", 1.0);
 
@@ -310,23 +300,14 @@ namespace vrpn_client_ros
 
 
     host_ = getHostStringFromParams(private_nh);
-    private_nh->get_parameter("frame_id", frame_id_);
-    private_nh->get_parameter("poses_qos_deadline", poses_qos_deadline_);
 
     RCLCPP_INFO_STREAM(output_nh_->get_logger(), "Connecting to VRPN server at " << host_);
     connection_ = std::shared_ptr<vrpn_Connection>(vrpn_get_connection_by_name(host_.c_str()));
     RCLCPP_INFO(output_nh_->get_logger(), "Connection established");
 
-    rclcpp::SensorDataQoS sensor_data_qos;
-    sensor_data_qos.keep_last(1);
-    sensor_data_qos.deadline(rclcpp::Duration(0, static_cast<int32_t>(1e9 / poses_qos_deadline_)));
-
-    poses_pub_ = nh->create_publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>("poses", sensor_data_qos);
-    twists_pub_ = nh->create_publisher<motion_capture_tracking_interfaces::msg::NamedTwistArray>("velocity", sensor_data_qos);
-    accels_pub_ = nh->create_publisher<motion_capture_tracking_interfaces::msg::NamedAccelArray>("accel", sensor_data_qos);
-
     double update_frequency;
     private_nh->get_parameter("update_frequency", update_frequency);
+
 
     mainloop_timer = nh->create_wall_timer(1s/update_frequency, std::bind(&VrpnClientRos::mainloop, this));
 
@@ -346,7 +327,6 @@ namespace vrpn_client_ros
            it != param_tracker_names_.end(); ++it)
       {
         trackers_.insert(std::make_pair(*it, std::make_shared<VrpnTrackerRos>(*it, connection_, output_nh_)));
-        trackers_.at(*it)->setClient(this);
       }
     }
   }
@@ -392,78 +372,8 @@ namespace vrpn_client_ros
         trackers_.insert(std::make_pair(connection_->sender_name(i),
                                         std::make_shared<VrpnTrackerRos>(connection_->sender_name(i), connection_,
                                                                            output_nh_)));
-        trackers_.at(connection_->sender_name(i))->setClient(this);
       }
       i++;
     }
-  }
-
-  void VrpnClientRos::handlePoseUpdate(
-    const std::string &tracker_name,
-    const geometry_msgs::msg::Pose &pose,
-    const builtin_interfaces::msg::Time &stamp)
-  {
-    latest_poses_[tracker_name] = pose;
-
-    motion_capture_tracking_interfaces::msg::NamedPoseArray msg;
-    msg.header.frame_id = frame_id_;
-    msg.header.stamp = stamp;
-    msg.poses.reserve(latest_poses_.size());
-
-    for (const auto &entry : latest_poses_)
-    {
-      motion_capture_tracking_interfaces::msg::NamedPose named_pose;
-      named_pose.name = entry.first;
-      named_pose.pose = entry.second;
-      msg.poses.push_back(named_pose);
-    }
-
-    poses_pub_->publish(msg);
-  }
-
-  void VrpnClientRos::handleTwistUpdate(
-    const std::string &tracker_name,
-    const geometry_msgs::msg::Twist &twist,
-    const builtin_interfaces::msg::Time &stamp)
-  {
-    latest_twists_[tracker_name] = twist;
-
-    motion_capture_tracking_interfaces::msg::NamedTwistArray msg;
-    msg.header.frame_id = frame_id_;
-    msg.header.stamp = stamp;
-    msg.twists.reserve(latest_twists_.size());
-
-    for (const auto &entry : latest_twists_)
-    {
-      motion_capture_tracking_interfaces::msg::NamedTwist named_twist;
-      named_twist.name = entry.first;
-      named_twist.twist = entry.second;
-      msg.twists.push_back(named_twist);
-    }
-
-    twists_pub_->publish(msg);
-  }
-
-  void VrpnClientRos::handleAccelUpdate(
-    const std::string &tracker_name,
-    const geometry_msgs::msg::Accel &accel,
-    const builtin_interfaces::msg::Time &stamp)
-  {
-    latest_accels_[tracker_name] = accel;
-
-    motion_capture_tracking_interfaces::msg::NamedAccelArray msg;
-    msg.header.frame_id = frame_id_;
-    msg.header.stamp = stamp;
-    msg.accels.reserve(latest_accels_.size());
-
-    for (const auto &entry : latest_accels_)
-    {
-      motion_capture_tracking_interfaces::msg::NamedAccel named_accel;
-      named_accel.name = entry.first;
-      named_accel.accel = entry.second;
-      msg.accels.push_back(named_accel);
-    }
-
-    accels_pub_->publish(msg);
   }
 }  // namespace vrpn_client_ros

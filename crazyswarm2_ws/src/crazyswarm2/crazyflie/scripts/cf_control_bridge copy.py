@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Bridge: stores latest cmd_vel_twist and pose, forwards both at 50 Hz.
-  - sub /cf_0/cmd_vel_twist (Twist)        → store → pub /cf_0/cmd_velocity_world (VelocityWorld)
-  - sub /cf_0/pose (PoseStamped)            → store → pub /cf_0/state (PoseStamped)
+  - sub /cf_1/cmd_vel_twist (Twist)        → store → pub /cf_1/cmd_velocity_world (VelocityWorld)
+  - sub /cf_1/pose (PoseStamped)            → store → pub /cf_1/state (PoseStamped)
 """
 
 import rclpy
@@ -19,12 +19,12 @@ class CfControlBridge(Node):
         self._latest_cmd = None
         self._latest_pose = None
 
-        self._cmd_pub = self.create_publisher(VelocityWorld, "/cf_2/cmd_velocity_world", 10)
-        self._state_pub = self.create_publisher(PoseStamped, "/cf_2/state", 10)
+        self._cmd_pub = self.create_publisher(VelocityWorld, "/cf_0/cmd_velocity_world", 10)
+        self._state_pub = self.create_publisher(PoseStamped, "/cf_0/state", 10)
 
         qos_cmd = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
-        self.create_subscription(Twist, "/cf_2/cmd_vel_twist", self._on_cmd, qos_cmd)
-        self.create_subscription(PoseStamped, "/cf_2/pose", self._on_pose, 10)
+        self.create_subscription(Twist, "/cf_0/cmd_vel_twist", self._on_cmd, qos_cmd)
+        self.create_subscription(PoseStamped, "/cf_0/pose", self._on_pose, 10)
 
         self._timer = self.create_timer(0.01, self._forward)
 
