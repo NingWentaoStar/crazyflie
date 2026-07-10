@@ -40,12 +40,6 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "geometry_msgs/msg/accel_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "motion_capture_tracking_interfaces/msg/named_pose.hpp"
-#include "motion_capture_tracking_interfaces/msg/named_pose_array.hpp"
-#include "motion_capture_tracking_interfaces/msg/named_accel.hpp"
-#include "motion_capture_tracking_interfaces/msg/named_accel_array.hpp"
-#include "motion_capture_tracking_interfaces/msg/named_twist.hpp"
-#include "motion_capture_tracking_interfaces/msg/named_twist_array.hpp"
 
 #include <vrpn_Tracker.h>
 #include <vrpn_Connection.h>
@@ -55,7 +49,6 @@
 
 namespace vrpn_client_ros
 {
-  class VrpnClientRos;
 
   typedef std::shared_ptr<vrpn_Connection> ConnectionPtr;
   typedef std::shared_ptr<vrpn_Tracker_Remote> TrackerRemotePtr;
@@ -84,23 +77,23 @@ namespace vrpn_client_ros
      */
     void mainloop();
 
-    void setClient(VrpnClientRos *client);
-
   private:
     TrackerRemotePtr tracker_remote_;
+    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::AccelStamped>::SharedPtr accel_pub_;
     rclcpp::Node::SharedPtr output_nh_;
     bool use_server_time_, broadcast_tf_;
     std::string tracker_name;
 
     rclcpp::TimerBase::SharedPtr mainloop_timer;
-    VrpnClientRos *client_;
 
     geometry_msgs::msg::PoseStamped pose_msg_;
     geometry_msgs::msg::TwistStamped twist_msg_;
     geometry_msgs::msg::AccelStamped accel_msg_;
     // geometry_msgs::TransformStamped transform_stamped_;
 
-    void init(std::string tracker_name, rclcpp::Node::SharedPtr nh, bool create_mainloop_timer, VrpnClientRos *client);
+    void init(std::string tracker_name, rclcpp::Node::SharedPtr nh, bool create_mainloop_timer);
 
     static void VRPN_CALLBACK handle_pose(void *userData, const vrpn_TRACKERCB tracker_pose);
 
@@ -132,15 +125,6 @@ namespace vrpn_client_ros
      */
     void updateTrackers();
 
-    void handlePoseUpdate(const std::string &tracker_name, const geometry_msgs::msg::Pose &pose,
-                          const builtin_interfaces::msg::Time &stamp);
-
-    void handleTwistUpdate(const std::string &tracker_name, const geometry_msgs::msg::Twist &twist,
-                           const builtin_interfaces::msg::Time &stamp);
-
-    void handleAccelUpdate(const std::string &tracker_name, const geometry_msgs::msg::Accel &accel,
-                           const builtin_interfaces::msg::Time &stamp);
-
   private:
     std::string host_;
     rclcpp::Node::SharedPtr output_nh_;
@@ -155,14 +139,6 @@ namespace vrpn_client_ros
      */
     TrackerMap trackers_;
 
-    rclcpp::Publisher<motion_capture_tracking_interfaces::msg::NamedPoseArray>::SharedPtr poses_pub_;
-    rclcpp::Publisher<motion_capture_tracking_interfaces::msg::NamedTwistArray>::SharedPtr twists_pub_;
-    rclcpp::Publisher<motion_capture_tracking_interfaces::msg::NamedAccelArray>::SharedPtr accels_pub_;
-    std::map<std::string, geometry_msgs::msg::Pose> latest_poses_;
-    std::map<std::string, geometry_msgs::msg::Twist> latest_twists_;
-    std::map<std::string, geometry_msgs::msg::Accel> latest_accels_;
-    std::string frame_id_;
-    double poses_qos_deadline_;
 
     rclcpp::TimerBase::SharedPtr refresh_tracker_timer, mainloop_timer;
   };
