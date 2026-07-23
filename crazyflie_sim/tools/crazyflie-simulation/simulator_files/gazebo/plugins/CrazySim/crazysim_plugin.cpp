@@ -134,6 +134,17 @@ void GzCrazyflieInterface::Configure(const gz::sim::Entity &_entity,
 }
 
 void GzCrazyflieInterface::PreUpdate(const gz::sim::UpdateInfo &_info, gz::sim::EntityComponentManager &_ecm) {
+	if (socketInit) {
+		uint32_t sim_time_ms = static_cast<uint32_t>(
+			std::chrono::duration_cast<std::chrono::milliseconds>(
+				_info.simTime).count());
+		struct step_sync_s sync = {
+			.header = crtp(CRTP_PORT_SETPOINT_SIM, 0),
+			.type = SENSOR_STEP_SYNC,
+			.sim_time_ms = sim_time_ms,
+		};
+		sendCfFirmware((const uint8_t*)&sync, sizeof(sync));
+	}
 	writeMotors();
 }
 

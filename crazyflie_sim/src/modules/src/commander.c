@@ -37,6 +37,10 @@
 #include "param.h"
 #include "static_mem.h"
 
+#ifdef CONFIG_PLATFORM_SITL
+extern uint32_t g_simTimeMs;
+#endif
+
 static bool isInit;
 // Static structs are zero-initialized, so nullSetpoint corresponds to
 // modeDisable for all stab_mode_t members and zero for all physical values.
@@ -66,7 +70,11 @@ void commanderInit(void)
 
   crtpCommanderInit();
   crtpCommanderHighLevelInit();
+#ifdef CONFIG_PLATFORM_SITL
+  lastUpdate = g_simTimeMs;
+#else
   lastUpdate = xTaskGetTickCount();
+#endif
 
   isInit = true;
 }
@@ -79,7 +87,11 @@ void commanderSetSetpoint(setpoint_t *setpoint, int priority)
   ASSERT(peekResult == pdTRUE);
 
   if (priority >= currentPriority) {
+#ifdef CONFIG_PLATFORM_SITL
+    setpoint->timestamp = g_simTimeMs;
+#else
     setpoint->timestamp = xTaskGetTickCount();
+#endif
     // This is a potential race but without effect on functionality
     xQueueOverwrite(setpointQueue, setpoint);
     xQueueOverwrite(priorityQueue, &priority);
@@ -115,7 +127,11 @@ bool commanderTest(void)
 
 uint32_t commanderGetInactivityTime(void)
 {
+#ifdef CONFIG_PLATFORM_SITL
+  return g_simTimeMs - lastUpdate;
+#else
   return xTaskGetTickCount() - lastUpdate;
+#endif
 }
 
 int commanderGetActivePriority(void)

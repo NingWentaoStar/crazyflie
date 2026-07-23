@@ -81,6 +81,9 @@
 // Measurement models
 #include "mm_distance.h"
 #include "mm_absolute_height.h"
+
+// Simulation time [ms] from sensors_sitl.c (updated by step_sync packets)
+extern uint32_t g_simTimeMs;
 #include "mm_position.h"
 #include "mm_pose.h"
 #include "mm_tdoa.h"
@@ -209,14 +212,14 @@ bool estimatorKalmanTaskTest() {
 static void kalmanTask(void* parameters) {
   systemWaitStart();
 
-  uint32_t nowMs = T2M(xTaskGetTickCount());
+  uint32_t nowMs = g_simTimeMs;
   uint32_t nextPredictionMs = nowMs;
 
   rateSupervisorInit(&rateSupervisorContext, nowMs, ONE_SECOND, PREDICT_RATE - 1, PREDICT_RATE + 1, 1);
 
   while (true) {
     xSemaphoreTake(runTaskSemaphore, portMAX_DELAY);
-    nowMs = T2M(xTaskGetTickCount()); // would be nice if this had a precision higher than 1ms...
+    nowMs = g_simTimeMs; // would be nice if this had a precision higher than 1ms...
 
     if (resetEstimation) {
       estimatorKalmanInit();
@@ -373,7 +376,7 @@ void estimatorKalmanInit(void)
   outlierFilterTdoaReset(&outlierFilterTdoaState);
   outlierFilterLighthouseReset(&sweepOutlierFilterState, 0);
 
-  uint32_t nowMs = T2M(xTaskGetTickCount());
+  uint32_t nowMs = g_simTimeMs;
   kalmanCoreInit(&coreData, &coreParams, nowMs);
 }
 

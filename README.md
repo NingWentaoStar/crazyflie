@@ -16,6 +16,13 @@
 
 ## 2. 安装配置
 
+### 2.0 ros依赖
+
+```bash
+sudo apt install ros-jazzy-gz-plugin-vendor ros-jazzy-gz-sim-vendor ros-jazzy-gz-transport-vendor ros-jazzy-gz-msgs-vendor ros-jazzy-tf-transformations
+sudo apt install ros-jazzy-vrpn
+```
+
 ### 2.1 Python 虚拟环境
 
 ```bash
@@ -32,7 +39,6 @@ pip install "empy<4" -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```bash
 cd ~/crazyflie/crazyflie_sim
 source ~/crazyflie/.venv/bin/activate
-export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v anaconda | tr '\n' ':')
 mkdir -p sitl_make/build && cd sitl_make/build
 cmake ..
 make -j"$(nproc)" all

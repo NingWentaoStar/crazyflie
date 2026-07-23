@@ -42,6 +42,7 @@ enum SensorTypeSim_e {
   SENSOR_MAG_SIM                = 1,
   SENSOR_BARO_SIM               = 2,
   SENSOR_POS_SIM				= 3,
+  SENSOR_STEP_SYNC              = 7,   // sim step sync with sim_time_ms
 };
 
 struct CrtpExtPose_s
@@ -117,4 +118,11 @@ struct pos_s {
 	union Axis3f pos;
 } __attribute__((packed));
 CHECKSIZE_RESPONSE(pos_s)
+
+struct step_sync_s {
+	const crtp header;           // port=CRTP_PORT_SETPOINT_SIM, channel=0
+	uint8_t type;                // SENSOR_STEP_SYNC = 7
+	uint32_t sim_time_ms;        // Gazebo simulation time [ms]
+} __attribute__((packed));
+CHECKSIZE_RESPONSE(step_sync_s)
 #endif //__CRTPUTILS_H___

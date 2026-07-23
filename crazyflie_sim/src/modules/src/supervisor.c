@@ -47,6 +47,10 @@
 #include "autoconf.h"
 #endif
 
+#ifdef CONFIG_PLATFORM_SITL
+extern uint32_t g_simTimeMs;
+#endif
+
 #define DEBUG_MODULE "SUP"
 #include "debug.h"
 
@@ -56,8 +60,8 @@
 // The minimum time (in ms) we need to see low thrust before saying that we are not flying anymore
 #define IS_FLYING_HYSTERESIS_THRESHOLD M2T(2000)
 
-#define COMMANDER_WDT_TIMEOUT_STABILIZE  M2T(500)
-#define COMMANDER_WDT_TIMEOUT_SHUTDOWN   M2T(2000)
+#define COMMANDER_WDT_TIMEOUT_STABILIZE  M2T(20000)
+#define COMMANDER_WDT_TIMEOUT_SHUTDOWN   M2T(60000)
 
 #ifndef CONFIG_MOTORS_REQUIRE_ARMING
   #define AUTO_ARMING 1
@@ -396,7 +400,11 @@ void supervisorUpdate(const sensorData_t *sensors, const setpoint_t* setpoint, s
   }
 
   SupervisorMem_t* this = &supervisorMem;
+#ifdef CONFIG_PLATFORM_SITL
+  const uint32_t currentTick = g_simTimeMs;
+#else
   const uint32_t currentTick = xTaskGetTickCount();
+#endif
 
   const supervisorConditionBits_t conditions = updateAndPopulateConditions(this, sensors, setpoint, currentTick);
   const supervisorState_t newState = supervisorStateUpdate(this->state, conditions);

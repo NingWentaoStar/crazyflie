@@ -46,6 +46,9 @@
 #include <math.h>
 #include <string.h>
 
+// 仿真时间 [ms]，由 step_sync 包更新，替代 xTaskGetTickCount 驱动 Kalman
+uint32_t g_simTimeMs = 0;
+
 // Battery voltage variables from pm_sitl.c
 extern float simBatteryVoltage;
 extern uint16_t simBatteryVoltageMV;
@@ -82,6 +85,7 @@ enum SensorTypeSim_e {
   SENSOR_BATT_SIM               = 4,
   SENSOR_TOF_SIM                = 5,
   SENSOR_FLOW_SIM               = 6,
+  SENSOR_STEP_SYNC              = 7,   // sim step sync, carries sim_time_ms
 };
 
 typedef struct
@@ -264,6 +268,15 @@ static void sensorsTask(void *param)
         simBatteryVoltageMV = (uint16_t)(voltage * 1000.0f);
         simPmState = (voltage < 3.0f) ? 3 : 0;
         break;
+      }
+      case SENSOR_STEP_SYNC:
+      {
+        // Update global sim time so Kalman filter uses sim clock for dt.
+        // Do NOT give dataReady here — sensor data for this step has not
+        // arrived yet, so waking the stabilizer would cause it to run with
+        // stale sensor data.  The following IMU packet will wake it.
+        memcpy(&g_simTimeMs, &p.data[1], sizeof(uint32_t));
+        continue;
       }
       default :
         break;
